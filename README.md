@@ -18,9 +18,12 @@ https://ecapture.cc/ :O
 https://www.parca.dev/
 https://ebpf.io/applications/
 
+https://blog.tofile.dev/2021/08/01/bad-bpf.html
+Bad BPF -> https://github.com/pathtofile/bad-bpf
 
 
-Secomp filters (not interesting from this point)
+
+# Secomp filters (not interesting from this point)
 https://man7.org/conf/elce2018/seccomp-ELCE-2018-Kerrisk.pdf
 https://blog.cloudflare.com/sandboxing-in-linux-with-zero-lines-of-code/
 https://github.com/cloudflare/sandbox
