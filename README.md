@@ -22,6 +22,7 @@ https://blog.tofile.dev/2021/08/01/bad-bpf.html
 Bad BPF -> https://github.com/pathtofile/bad-bpf
 -> https://github.com/iovisor/bcc/blob/master/docs/reference_guide.md
 -> https://android.googlesource.com/platform/external/bcc/+/refs/heads/android10-c2f2-s1-release/docs/reference_guide.md#6-bpf_get_current_comm
+-> Receive reset -> https://github.com/krisnova/boopkit/blob/main/pr0be.boop.c
 
 
 
