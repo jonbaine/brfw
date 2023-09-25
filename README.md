@@ -25,6 +25,16 @@ Bad BPF -> https://github.com/pathtofile/bad-bpf
 -> Receive reset -> https://github.com/krisnova/boopkit/blob/main/pr0be.boop.c
 
 
+About printk -> 
+
+Where does all the loggin goes -> `sudo cat /sys/kernel/debug/tracing/trace_pipe`
+https://nakryiko.com/posts/bpf-tips-printk/
+
+Syscall structure --> 
+https://syscalls.mebeim.net/?table=x86/64/x64/v6.5
+
+
+
 
 # Secomp filters (not interesting from this point)
 https://man7.org/conf/elce2018/seccomp-ELCE-2018-Kerrisk.pdf
