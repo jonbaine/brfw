@@ -55,6 +55,52 @@ brfw prints events as they occur:
 [BLOCKED] bind PID 9012 (nc)
 ```
 
+## Writeblocker
+
+Writeblocker intercepts `write` and `openat` syscalls for specified binaries. It uses the same inode-based matching as brfw.
+
+### Building
+
+```bash
+cd src
+make writeblocker
+```
+
+### Usage
+
+```bash
+# Silently discard writes from curl (default action)
+sudo ./bin/writeblocker -b /usr/bin/curl
+
+# Block writes with -EPERM error
+sudo ./bin/writeblocker -a block -b /usr/bin/vim
+
+# Multiple binaries
+sudo ./bin/writeblocker -a discard -b /usr/bin/curl -b /usr/bin/wget
+```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `-b PATH` | Binary path to intercept writes for (repeatable) |
+| `-a ACTION` | Action: `block` (-EPERM) or `discard` (fake success, default) |
+
+### Actions
+
+- **block** — returns `-EPERM` to the caller for both `write` and `openat`
+- **discard** — fakes success for `write` (returns byte count), blocks `openat` with `-EPERM` (can't fake a valid fd)
+
+### Output
+
+```
+[DISCARDED] write  PID 1234 (curl) fd=5
+[DISCARDED] openat PID 1234 (bash) flags=0601
+[BLOCKED]   write  PID 5678 (vim) fd=4
+```
+
+The `openat` hook catches write-intent opens (`O_WRONLY`, `O_RDWR`, `O_CREAT`, `O_TRUNC`, `O_APPEND`), preventing shell redirections like `echo "" > file` from truncating files.
+
 ## Architecture
 
 - **`src/brfw.bpf.c`** - eBPF kernel program with `fmod_ret` hooks on connect/bind

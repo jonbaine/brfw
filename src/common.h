@@ -55,4 +55,20 @@ struct fw_event {
     int syscall; // 0=connect, 1=bind
 };
 
+// Writeblocker actions
+#define WB_ACTION_BLOCK   1  // return -EPERM
+#define WB_ACTION_DISCARD 2  // return count (fake success)
+
+// Writeblocker syscall types
+#define WB_SYS_WRITE  0
+#define WB_SYS_OPENAT 1
+
+struct wb_event {
+    int pid;
+    char comm[TASK_COMM_LEN];
+    int action;   // WB_ACTION_*
+    int fd;       // file descriptor (write) or flags (openat)
+    int syscall;  // WB_SYS_*
+};
+
 #endif  // BAD_BPF_COMMON_H
