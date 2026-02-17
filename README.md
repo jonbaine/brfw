@@ -1,46 +1,68 @@
-# brfw
-Brotxis Firewall
+# brfw - Binary-path based eBPF Firewall
 
+brfw is a Linux application firewall that blocks or allows `connect` and `bind` syscalls based on the binary path of the calling process.
 
-## Links for EBPF stuff:
+It uses eBPF `fmod_ret` hooks to intercept syscalls before they execute, and matches processes by inode + device number for fast, reliable lookups inside the kernel.
 
-Ebpf map types.
-https://prototype-kernel.readthedocs.io/en/latest/bpf/ebpf_maps_types.html
-https://prototype-kernel.readthedocs.io/en/latest/bpf/ebpf_maps.html
+## How it works
 
-Full path d_path type-
-https://stackoverflow.com/questions/75877938/how-to-get-the-full-path-of-the-process-executable-file-based-on-ebpf
+1. You specify binary paths (e.g. `/usr/bin/curl`) and a firewall mode (allowlist or blocklist)
+2. brfw resolves each path to an `(inode, device)` pair via `stat()`
+3. An eBPF program attached to `connect` and `bind` syscalls reads the calling process's executable inode from `task->mm->exe_file->f_inode`
+4. A hash map lookup determines whether to allow or block the syscall
+5. Events are streamed to userspace via a ring buffer
 
-https://bowers.github.io/eBPF-Hello-World/
-nftables -> https://www.linode.com/docs/guides/how-to-use-nftables/
-Different ebpf tools -> https://github.com/iovisor/bcc/blob/master/docs/tutorial.md
-https://ecapture.cc/ :O 
-https://www.parca.dev/
-https://ebpf.io/applications/
+## Requirements
 
-https://blog.tofile.dev/2021/08/01/bad-bpf.html
-Bad BPF -> https://github.com/pathtofile/bad-bpf
--> https://github.com/iovisor/bcc/blob/master/docs/reference_guide.md
--> https://android.googlesource.com/platform/external/bcc/+/refs/heads/android10-c2f2-s1-release/docs/reference_guide.md#6-bpf_get_current_comm
--> Receive reset -> https://github.com/krisnova/boopkit/blob/main/pr0be.boop.c
+- Linux kernel 5.7+ with BTF support
+- clang, llvm-strip, bpftool
+- libbpf (built from the included submodule)
+- Root privileges to run
 
+## Building
 
-About printk -> 
+```bash
+cd src
+make brfw
+```
 
-Where does all the loggin goes -> `sudo cat /sys/kernel/debug/tracing/trace_pipe`
-https://nakryiko.com/posts/bpf-tips-printk/
+The binary is placed in `src/bin/brfw`.
 
-Syscall structure --> 
-https://syscalls.mebeim.net/?table=x86/64/x64/v6.5
+## Usage
 
+```bash
+# Blocklist mode: block specific binaries, allow everything else
+sudo ./bin/brfw -m blocklist -b /usr/bin/curl -b /usr/bin/wget
 
+# Allowlist mode: only allow specific binaries, block everything else
+sudo ./bin/brfw -m allowlist -b /usr/bin/curl
+```
 
+### Options
 
-# Secomp filters (not interesting from this point)
-https://man7.org/conf/elce2018/seccomp-ELCE-2018-Kerrisk.pdf
-https://blog.cloudflare.com/sandboxing-in-linux-with-zero-lines-of-code/
-https://github.com/cloudflare/sandbox
-Secomp user decision -> https://man7.org/tlpi/code/online/dist/seccomp/seccomp_deny_open.c.html
-The linux programming interface -> https://github.com/rangaeeeee/books-raspberrypimagazines/blob/master/The%20Linux%20Programming%20Interface-Michael%20Kerrisk.pdf
-https://book.hacktricks.xyz/linux-hardening/privilege-escalation/docker-security/seccomp
-https://lwn.net/Articles/756233/
+| Flag | Description |
+|------|-------------|
+| `-b PATH` | Binary path to add to the firewall list (repeatable) |
+| `-m MODE` | Firewall mode: `allowlist` (default) or `blocklist` |
+
+### Output
+
+brfw prints events as they occur:
+
+```
+[BLOCKED] connect PID 1234 (curl)
+[ALLOWED] connect PID 5678 (bash)
+[BLOCKED] bind PID 9012 (nc)
+```
+
+## Architecture
+
+- **`src/brfw.bpf.c`** - eBPF kernel program with `fmod_ret` hooks on connect/bind
+- **`src/brfw.c`** - Userspace loader, CLI argument parsing, ring buffer consumer
+- **`src/common.h`** - Shared data structures between kernel and userspace
+
+## Limitations
+
+- Matches by inode, so replacing a binary on disk (e.g. via package update) changes its identity
+- `fmod_ret` requires kernel 5.7+ and may not be available on all configurations
+- Only intercepts `connect` and `bind` syscalls (not `sendto`, `sendmsg`, etc.)
