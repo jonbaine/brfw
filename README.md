@@ -6,6 +6,9 @@ It uses eBPF `fmod_ret` hooks to intercept syscalls before they execute, and mat
 
 brfw automatically refreshes monitored inodes in response to package manager updates, with no restart required.
 
+> [!WARNING]
+> Only **ARM64** and **x86-64** kernels are supported. All other architectures are not supported at this time.
+
 ## About the name
 
 brfw means -literally- _brotxis firewall_, which is a lovely joke name that I share with my wife.
