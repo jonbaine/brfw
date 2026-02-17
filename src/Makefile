@@ -74,9 +74,12 @@ $(OUTPUT)/%.o: %.c $(wildcard %.h) | $(OUTPUT)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
 # Build application binary
-$(APPS): %: $(OUTPUT)/%.o | $(OUTPUT)
+$(APPS): %: $(OUTPUT)/%.o | $(OUTPUT) bin
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $^ $(LIBBPF_LIBS) -lelf -lz -o bin/$@
+
+bin:
+	$(Q)mkdir -p $@
 
 # Build helpers
 $(HELPERS):
