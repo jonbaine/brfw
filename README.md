@@ -14,19 +14,34 @@ It uses eBPF `fmod_ret` hooks to intercept syscalls before they execute, and mat
 
 ## Requirements
 
-- Linux kernel 5.7+ with BTF support
-- clang, llvm-strip, bpftool
-- libbpf (built from the included submodule)
+- Linux kernel 5.7+ with BTF support (`/sys/kernel/btf/vmlinux` must exist)
 - Root privileges to run
+
+### Build dependencies
+
+Debian/Ubuntu:
+
+```bash
+sudo apt install clang llvm libelf-dev libbpf-dev bpftool pkg-config zlib1g-dev
+```
+
+Fedora:
+
+```bash
+sudo dnf install clang llvm elfutils-libelf-devel libbpf-devel bpftool pkg-config zlib-devel
+```
+
+The Makefile uses `pkg-config` to find libbpf and generates `vmlinux.h` from the running kernel's BTF at build time.
 
 ## Building
 
 ```bash
 cd src
-make brfw
+make         # build everything
+make brfw    # build brfw only
 ```
 
-The binary is placed in `src/bin/brfw`.
+The binaries are placed in `src/bin/`.
 
 ## Usage
 

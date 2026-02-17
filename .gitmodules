@@ -1,4 +1,0 @@
-[submodule "libbpf"]
-	path = libbpf
-	url = git@github.com:libbpf/libbpf.git
-	branch = libbpf-v1.2.2-bugfix

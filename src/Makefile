@@ -3,13 +3,16 @@ OUTPUT := .output
 CLANG ?= clang
 LLVM_STRIP ?= llvm-strip-18
 BPFTOOL ?= bpftool
-LIBBPF_SRC := $(abspath ../libbpf/src)
-LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
-INCLUDES := -I$(OUTPUT)
 CFLAGS := -g -Wall
 ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/')
 
 APPS = writeblocker brfw
+
+# Use system libbpf via pkg-config, fall back to -lbpf
+LIBBPF_CFLAGS := $(shell pkg-config --cflags libbpf 2>/dev/null)
+LIBBPF_LIBS := $(shell pkg-config --libs libbpf 2>/dev/null || echo "-lbpf")
+
+INCLUDES := -I$(OUTPUT) $(LIBBPF_CFLAGS)
 
 # Get Clang's default includes on this system. We'll explicitly add these dirs
 # to the includes list when compiling with `-target bpf` because otherwise some
@@ -43,20 +46,17 @@ clean:
 	$(Q)rm -rf $(OUTPUT) $(APPS)
 	$(Q)cd bin && rm -f $(APPS) $(HELPERS)
 
-$(OUTPUT) $(OUTPUT)/libbpf:
+$(OUTPUT):
 	$(call msg,MKDIR,$@)
 	$(Q)mkdir -p $@
 
-# Build libbpf
-$(LIBBPF_OBJ): $(wildcard $(LIBBPF_SRC)/*.[ch] $(LIBBPF_SRC)/Makefile) | $(OUTPUT)/libbpf
-	$(call msg,LIB,$@)
-	$(Q)$(MAKE) -C $(LIBBPF_SRC) BUILD_STATIC_ONLY=1		      \
-		    OBJDIR=$(dir $@)/libbpf DESTDIR=$(dir $@)		      \
-		    INCLUDEDIR= LIBDIR= UAPIDIR=			      \
-		    install
+# Generate vmlinux.h from running kernel's BTF
+vmlinux.h:
+	$(call msg,VMLINUX,$@)
+	$(Q)$(BPFTOOL) btf dump file /sys/kernel/btf/vmlinux format c > $@
 
 # Build BPF code
-$(OUTPUT)/%.bpf.o: %.bpf.c $(LIBBPF_OBJ) $(wildcard %.h) vmlinux.h | $(OUTPUT)
+$(OUTPUT)/%.bpf.o: %.bpf.c $(wildcard %.h) vmlinux.h | $(OUTPUT)
 	$(call msg,BPF,$@)
 	$(Q)$(CLANG) -g -O2 -target bpf -D__TARGET_ARCH_$(ARCH) $(INCLUDES) $(CLANG_BPF_SYS_INCLUDES) -c $(filter %.c,$^) -o $@
 	$(Q)$(LLVM_STRIP) -g $@ # strip useless DWARF info
@@ -74,9 +74,9 @@ $(OUTPUT)/%.o: %.c $(wildcard %.h) | $(OUTPUT)
 	$(Q)$(CC) $(CFLAGS) $(INCLUDES) -c $(filter %.c,$^) -o $@
 
 # Build application binary
-$(APPS): %: $(OUTPUT)/%.o $(LIBBPF_OBJ) | $(OUTPUT)
+$(APPS): %: $(OUTPUT)/%.o | $(OUTPUT)
 	$(call msg,BINARY,$@)
-	$(Q)$(CC) $(CFLAGS) $^ -lelf -lz -o bin/$@
+	$(Q)$(CC) $(CFLAGS) $^ $(LIBBPF_LIBS) -lelf -lz -o bin/$@
 
 # Build helpers
 $(HELPERS):
@@ -88,4 +88,3 @@ $(HELPERS):
 
 # keep intermediate (.skel.h, .bpf.o, etc) targets
 .SECONDARY:
-
