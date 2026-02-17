@@ -4,6 +4,10 @@ brfw is a Linux application firewall that blocks or allows `connect` and `bind` 
 
 It uses eBPF `fmod_ret` hooks to intercept syscalls before they execute, and matches processes by inode + device number for fast, reliable lookups inside the kernel.
 
+## About the name
+
+brfw means -literally- _brotxis firewall_, which is a lovely joke name that I share with my wife.
+
 ## How it works
 
 1. You specify binary paths (e.g. `/usr/bin/curl`) and a firewall mode (allowlist or blocklist)
