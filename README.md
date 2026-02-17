@@ -1,8 +1,10 @@
-# brfw - path based eBPF Firewall
+# brfw - eBPF Application Firewall
 
 brfw is a Linux application firewall that blocks or allows `connect` and `bind` syscalls based on the binary path of the calling process.
 
 It uses eBPF `fmod_ret` hooks to intercept syscalls before they execute, and matches processes by inode + device number for fast, reliable lookups inside the kernel.
+
+brfw automatically refreshes monitored inodes in response to package manager updates, with no restart required.
 
 ## About the name
 
