@@ -1,5 +1,8 @@
 # brfw - eBPF Application Firewall
 
+> [!WARNING]
+> Only **ARM64** and **x86-64** kernels are supported. All other architectures are not supported at this time.
+
 brfw is a Linux application firewall that blocks or allows `connect` and `bind` syscalls based on the binary path of the calling process.
 
 It uses eBPF `fmod_ret` hooks to intercept syscalls before they execute, and matches processes by inode + device number for fast, reliable lookups inside the kernel.
