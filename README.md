@@ -120,6 +120,39 @@ sudo ./bin/writeblocker -a discard -b /usr/bin/curl -b /usr/bin/wget
 
 The `openat` hook catches write-intent opens (`O_WRONLY`, `O_RDWR`, `O_CREAT`, `O_TRUNC`, `O_APPEND`), preventing shell redirections like `echo "" > file` from truncating files.
 
+## Testing
+
+### Compile test
+
+Verifies that all BPF objects, skeletons, and userland binaries build successfully. Also runs compile-time static assertions that catch ABI drift (struct size/offset changes).
+
+```bash
+cd src
+make test-compile
+```
+
+### Integration tests
+
+End-to-end tests that exercise brfw with real BPF programs attached. Requires root and a BTF-enabled kernel.
+
+```bash
+cd src
+make clean && make
+sudo ../tests/run_tests.sh
+```
+
+Or from the `src/` directory:
+
+```bash
+sudo make test
+```
+
+The test suite currently includes:
+
+- **test_brfw_allowlist** — starts brfw in allowlist mode with an unrelated binary listed, then verifies that an unlisted binary's `connect()` is blocked with `EPERM`
+
+Tests that require root will print `SKIP` and exit cleanly when run as a non-root user.
+
 ## Architecture
 
 - **`src/brfw.bpf.c`** - eBPF kernel program with `fmod_ret` hooks on connect/bind

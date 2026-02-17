@@ -83,6 +83,14 @@ $(HELPERS):
 	$(call msg,BINARY,$@)
 	$(Q)$(CC) $(CFLAGS) $@.c -o bin/$@
 
+.PHONY: test-compile
+test-compile: all
+	@echo "test-compile: all targets built successfully"
+
+.PHONY: test
+test: all
+	../tests/run_tests.sh
+
 # delete failed targets
 .DELETE_ON_ERROR:
 

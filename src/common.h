@@ -71,4 +71,14 @@ struct wb_event {
     int syscall;  // WB_SYS_*
 };
 
+// Static assertions to catch ABI drift at compile time
+#ifndef __bpf__
+#include <stddef.h>
+_Static_assert(sizeof(struct bin_key) == 16, "bin_key size changed — update BPF maps");
+_Static_assert(offsetof(struct bin_key, ino) == 0, "bin_key.ino offset changed");
+_Static_assert(offsetof(struct bin_key, dev) == 8, "bin_key.dev offset changed");
+_Static_assert(sizeof(struct fw_event) == 28, "fw_event size changed — check ring buffer compat");
+_Static_assert(sizeof(struct wb_event) == 32, "wb_event size changed — check ring buffer compat");
+#endif
+
 #endif  // BAD_BPF_COMMON_H
