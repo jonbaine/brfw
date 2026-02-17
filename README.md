@@ -1,4 +1,4 @@
-# brfw - Binary-path based eBPF Firewall
+# brfw - path based eBPF Firewall
 
 brfw is a Linux application firewall that blocks or allows `connect` and `bind` syscalls based on the binary path of the calling process.
 
@@ -164,3 +164,4 @@ Tests that require root will print `SKIP` and exit cleanly when run as a non-roo
 - Matches by inode, so replacing a binary on disk (e.g. via package update) changes its identity
 - `fmod_ret` requires kernel 5.7+ and may not be available on all configurations
 - Only intercepts `connect` and `bind` syscalls (not `sendto`, `sendmsg`, etc.)
+
