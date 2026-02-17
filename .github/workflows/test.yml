@@ -19,6 +19,9 @@ jobs:
           sudo apt-get install -y clang llvm llvm-18 libelf-dev libbpf-dev \
             linux-tools-common linux-tools-$(uname -r) pkg-config zlib1g-dev
 
+      - name: Generate vmlinux.h
+        run: cd src && make vmlinux.h
+
       - name: Build and verify
         run: cd src && make test-compile
 

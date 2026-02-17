@@ -89,8 +89,8 @@ int BPF_PROG(writeblocker_write, struct pt_regs *regs)
     bpf_probe_read_kernel(&arg0, sizeof(arg0), (void *)regs);
     bpf_probe_read_kernel(&arg2, sizeof(arg2), (void *)regs + 16);
 #else
-    arg0 = PT_REGS_PARM1_CORE(regs);
-    arg2 = PT_REGS_PARM3_CORE(regs);
+    arg0 = PT_REGS_PARM1(regs);
+    arg2 = PT_REGS_PARM3(regs);
 #endif
     u32 fd = (u32)arg0;
     u32 count = (u32)arg2;
@@ -123,7 +123,7 @@ int BPF_PROG(writeblocker_openat, struct pt_regs *regs)
 #if defined(__TARGET_ARCH_arm64)
     bpf_probe_read_kernel(&arg2, sizeof(arg2), (void *)regs + 16);
 #else
-    arg2 = PT_REGS_PARM3_CORE(regs);
+    arg2 = PT_REGS_PARM3(regs);
 #endif
     int flags = (int)arg2;
 
