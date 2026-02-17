@@ -83,14 +83,22 @@ int BPF_PROG(writeblocker_write, struct pt_regs *regs)
     if (!match_binary(&key))
         return 0;
 
-    // Read syscall arguments from pt_regs
+    // Read syscall arguments directly from pt_regs using bpf_probe_read_kernel.
+    // We avoid PT_REGS_PARM* macros because they rely on struct field names
+    // (e.g. "di", "dx") that may not exist in vmlinux.h — the BTF-generated
+    // struct pt_regs can vary across kernel versions and distributions.
+    //
+    // x86_64 pt_regs layout (stable kernel ABI, see arch/x86/include/asm/ptrace.h):
+    //   offset 112 = di (arg1), offset 104 = si (arg2), offset 96 = dx (arg3)
+    // arm64 pt_regs layout (see arch/arm64/include/asm/ptrace.h):
+    //   offset 0 = x0 (arg1), offset 8 = x1 (arg2), offset 16 = x2 (arg3)
     u64 arg0, arg2;
 #if defined(__TARGET_ARCH_arm64)
-    bpf_probe_read_kernel(&arg0, sizeof(arg0), (void *)regs);
-    bpf_probe_read_kernel(&arg2, sizeof(arg2), (void *)regs + 16);
+    bpf_probe_read_kernel(&arg0, sizeof(arg0), (void *)regs);       // x0 = fd
+    bpf_probe_read_kernel(&arg2, sizeof(arg2), (void *)regs + 16);  // x2 = count
 #else
-    arg0 = PT_REGS_PARM1(regs);
-    arg2 = PT_REGS_PARM3(regs);
+    bpf_probe_read_kernel(&arg0, sizeof(arg0), (void *)regs + 112); // di = fd
+    bpf_probe_read_kernel(&arg2, sizeof(arg2), (void *)regs + 96);  // dx = count
 #endif
     u32 fd = (u32)arg0;
     u32 count = (u32)arg2;
@@ -119,11 +127,12 @@ int BPF_PROG(writeblocker_openat, struct pt_regs *regs)
         return 0;
 
     // Read flags (3rd arg of openat: dirfd, pathname, flags, mode)
+    // See offset comment in writeblocker_write above
     u64 arg2;
 #if defined(__TARGET_ARCH_arm64)
-    bpf_probe_read_kernel(&arg2, sizeof(arg2), (void *)regs + 16);
+    bpf_probe_read_kernel(&arg2, sizeof(arg2), (void *)regs + 16);  // x2 = flags
 #else
-    arg2 = PT_REGS_PARM3(regs);
+    bpf_probe_read_kernel(&arg2, sizeof(arg2), (void *)regs + 96);  // dx = flags
 #endif
     int flags = (int)arg2;
 
