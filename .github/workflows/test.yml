@@ -1,0 +1,48 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Compile test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm llvm-18 libelf-dev libbpf-dev \
+            linux-tools-common linux-tools-$(uname -r) pkg-config zlib1g-dev
+
+      - name: Build and verify
+        run: cd src && make test-compile
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-24.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm llvm-18 libelf-dev libbpf-dev \
+            linux-tools-common linux-tools-$(uname -r) pkg-config zlib1g-dev
+
+      - name: Check BTF support
+        run: |
+          if [ ! -f /sys/kernel/btf/vmlinux ]; then
+            echo "::warning::Kernel BTF not available, integration tests will be skipped"
+          fi
+
+      - name: Build
+        run: cd src && make
+
+      - name: Run integration tests
+        run: sudo tests/run_tests.sh
