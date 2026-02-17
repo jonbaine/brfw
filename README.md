@@ -15,6 +15,7 @@ brfw means -literally- _brotxis firewall_, which is a lovely joke name that I sh
 3. An eBPF program attached to `connect` and `bind` syscalls reads the calling process's executable inode from `task->mm->exe_file->f_inode`
 4. A hash map lookup determines whether to allow or block the syscall
 5. Events are streamed to userspace via a ring buffer
+6. brfw watches the parent directory of each monitored binary with `inotify`; when a binary is replaced on disk (e.g. via an atomic package-manager rename), brfw re-`stat()`s the path, detects the inode change, and atomically updates the eBPF map — no restart required
 
 ## Requirements
 
@@ -69,9 +70,17 @@ sudo ./bin/brfw -m allowlist -b /usr/bin/curl
 brfw prints events as they occur:
 
 ```
+Binary: /usr/bin/curl -> ino=12345 dev=2049 (major=8 minor=1)
+brfw started in blocklist mode with 1 binaries
 [BLOCKED] connect PID 1234 (curl)
 [ALLOWED] connect PID 5678 (bash)
 [BLOCKED] bind PID 9012 (nc)
+```
+
+When a monitored binary is replaced on disk, brfw detects the inode change and updates the eBPF map automatically:
+
+```
+Binary updated: /usr/bin/curl ino=12345->12399
 ```
 
 ## Writeblocker
@@ -150,6 +159,7 @@ sudo make test
 The test suite currently includes:
 
 - **test_brfw_allowlist** — starts brfw in allowlist mode with an unrelated binary listed, then verifies that an unlisted binary's `connect()` is blocked with `EPERM`
+- **test_brfw_inode_refresh** — atomically replaces a monitored binary (simulating a package manager update), then verifies brfw detects the inode change and continues to enforce the rule on the new binary
 
 Tests that require root will print `SKIP` and exit cleanly when run as a non-root user.
 
@@ -161,7 +171,6 @@ Tests that require root will print `SKIP` and exit cleanly when run as a non-roo
 
 ## Limitations
 
-- Matches by inode, so replacing a binary on disk (e.g. via package update) changes its identity
 - `fmod_ret` requires kernel 5.7+ and may not be available on all configurations
 - Only intercepts `connect` and `bind` syscalls (not `sendto`, `sendmsg`, etc.)
 
