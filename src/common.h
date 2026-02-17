@@ -32,4 +32,27 @@ struct tr_text {
     unsigned int text_len;
 };
 
+// brfw firewall structures
+
+#define MAX_ENTRIES 128
+
+// Key for the binary map — identifies a binary on disk
+struct bin_key {
+    __u64 ino;   // inode number
+    __u32 dev;   // device number
+    __u32 _pad;  // padding for alignment
+};
+
+// Firewall modes
+#define FW_MODE_ALLOWLIST 0  // block everything except listed binaries
+#define FW_MODE_BLOCKLIST 1  // allow everything except listed binaries
+
+// Event reported to userspace
+struct fw_event {
+    int pid;
+    char comm[TASK_COMM_LEN];
+    int action;  // 0=allowed, 1=blocked
+    int syscall; // 0=connect, 1=bind
+};
+
 #endif  // BAD_BPF_COMMON_H

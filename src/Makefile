@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: (LGPL-2.1 OR BSD-2-Clause)
 OUTPUT := .output
-CLANG ?= clang-11
-LLVM_STRIP ?= llvm-strip-11
+CLANG ?= clang
+LLVM_STRIP ?= llvm-strip-18
 BPFTOOL ?= bpftool
 LIBBPF_SRC := $(abspath ../libbpf/src)
 LIBBPF_OBJ := $(abspath $(OUTPUT)/libbpf.a)
 INCLUDES := -I$(OUTPUT)
 CFLAGS := -g -Wall
-ARCH := $(shell uname -m | sed 's/x86_64/x86/')
+ARCH := $(shell uname -m | sed 's/x86_64/x86/' | sed 's/aarch64/arm64/')
 
 APPS = writeblocker brfw
 
