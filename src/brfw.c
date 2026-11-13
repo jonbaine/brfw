@@ -129,7 +129,6 @@ static void handle_inotify(int inotify_fd, int map_fd)
                    watched[i].path,
                    (unsigned long)watched[i].key.ino,
                    (unsigned long)new_key.ino);
-            fflush(stdout);
 
             __u8 val = 1;
             bpf_map_delete_elem(map_fd, &watched[i].key);

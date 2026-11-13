@@ -1,36 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
-#ifndef BAD_BPF_COMMON_H
-#define BAD_BPF_COMMON_H
+#ifndef BRFW_COMMON_H
+#define BRFW_COMMON_H
 
-// These are used by a number of
-// different programs to sync eBPF Tail Call
-// login between user space and kernel
-#define PROG_00 0
-#define PROG_01 1
-#define PROG_02 2
-
-// Used when replacing text
-#define FILENAME_LEN_MAX 50
-#define TEXT_LEN_MAX 20
-
-// Simple message structure to get events from eBPF Programs
-// in the kernel to user spcae
 #define TASK_COMM_LEN 16
-struct event {
-    int pid;
-    char comm[TASK_COMM_LEN];
-    bool success;
-};
-
-struct tr_file {
-    char filename[FILENAME_LEN_MAX];
-    unsigned int filename_len;
-};
-
-struct tr_text {
-    char text[TEXT_LEN_MAX];
-    unsigned int text_len;
-};
 
 // brfw firewall structures
 
@@ -81,4 +53,4 @@ _Static_assert(sizeof(struct fw_event) == 28, "fw_event size changed — check r
 _Static_assert(sizeof(struct wb_event) == 32, "wb_event size changed — check ring buffer compat");
 #endif
 
-#endif  // BAD_BPF_COMMON_H
+#endif  // BRFW_COMMON_H

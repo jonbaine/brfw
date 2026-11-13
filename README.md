@@ -178,4 +178,5 @@ Tests that require root will print `SKIP` and exit cleanly when run as a non-roo
 
 - `fmod_ret` requires kernel 5.7+ and may not be available on all configurations
 - Only intercepts `connect` and `bind` syscalls (not `sendto`, `sendmsg`, etc.)
+- Binaries are matched by inode, not by content: a copy of a listed binary (e.g. `cp /usr/bin/curl /tmp/x`) has a new inode and is not matched, so it bypasses blocklist mode
 
