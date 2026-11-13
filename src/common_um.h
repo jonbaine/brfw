@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-3-Clause
-#ifndef BAD_BPF_COMMON_UM_H
-#define BAD_BPF_COMMON_UM_H
+#ifndef BRFW_COMMON_UM_H
+#define BRFW_COMMON_UM_H
 
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
@@ -53,6 +53,9 @@ static bool bump_memlock_rlimit(void)
 
 
 static bool setup() {
+    // Line-buffer stdout so events show up promptly when redirected to a file or journald
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
     // Set up libbpf errors and debug info callback 
     libbpf_set_print(libbpf_print_fn);
 
@@ -69,28 +72,4 @@ static bool setup() {
     return true;
 }
 
-
-#ifdef BAD_BPF_USE_TRACE_PIPE
-static void read_trace_pipe(void) {
-    int trace_fd;
-
-    trace_fd = open("/sys/kernel/debug/tracing/trace_pipe", O_RDONLY, 0);
-    if (trace_fd == -1) {
-        printf("Error opening trace_pipe: %s\n", strerror(errno));
-        return;
-    }
-
-    while (!exiting) {
-        static char buf[4096];
-        ssize_t sz;
-
-        sz = read(trace_fd, buf, sizeof(buf) -1);
-        if (sz > 0) {
-            buf[sz] = '\x00';
-            puts(buf);
-        }
-    }
-}
-#endif  // BAD_BPF_USE_TRACE_PIPE
-
-#endif  // BAD_BPF_COMMON_UM_H
+#endif  // BRFW_COMMON_UM_H
